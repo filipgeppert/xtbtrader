@@ -1,0 +1,46 @@
+trades = [
+    {
+        "cmd": 0,
+        "order": 212828097,
+        "digits": 2,
+        "offset": 0,
+        "order2": 212828091,
+        "position": 212828097,
+        "symbol": "ORCL.US_4",
+        "comment": "",
+        "customComment": None,
+        "commission": -6.0,
+        "storage": -0.42,
+        "margin_rate": 0.0,
+        "close_price": 56.07,
+        "open_price": 56.19,
+        "nominalValue": 0.0,
+        "profit": -12.0,
+        "volume": 100.0,
+        "sl": 0.0,
+        "tp": 0.0,
+        "closed": False,
+        "timestamp": 1595435193892,
+        "spread": 0,
+        "taxes": 0.0,
+        "open_time": 1595354069000,
+        "open_timeString": "Tue Jul 21 19:54:29 CEST 2020",
+        "close_time": None,
+        "close_timeString": None,
+        "expiration": None,
+        "expirationString": None
+    }
+]
+
+balance_data = {'balance': 99961.63,
+                'margin': 19649.43,
+                'currency': 'USD',
+                'credit': 0.0,
+                'equityFX': 100693.88,
+                'equity': 100693.88,
+                'margin_free': 80312.2,
+                'margin_level': 512.45,
+                'stockValue': 0.0,
+                'stockLock': 0.0,
+                'cashStockValue': 0.0
+                }

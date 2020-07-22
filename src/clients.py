@@ -142,18 +142,22 @@ class APIClient(JsonSocket):
         """Returns array of user's trades."""
         return self.execute(
             baseCommand(commandName="getTrades", arguments={"openedOnly": opened_only})
-        )
+        ).get('returnData')
 
     def getCurrentTickPrice(self, ticker: str):
         """Returns array of current quotations for given symbols,
            only quotations that changed from given timestamp are returned.
            New timestamp obtained from output will be used as an argument of the next call of this command."""
+        # TODO: download last available price no sth fixed by timestamp
         r = self.execute(
             baseCommand(commandName="getTickPrices",
-                        arguments={"level": 0, "symbols": [ticker], "timestamp": int(time.time()*1000 - 1000)})
+                        arguments={"level": 0, "symbols": [ticker], "timestamp": int(time.time() * 1000 - 10000)})
         )
         if r['status']:
-            return r['returnData']['quotations'][0]
+            if r['returnData']['quotations']:
+                return r['returnData']['quotations'][0]
+            else:
+                self.logger.error(f"Data was not found for {ticker}")
         else:
             self.logger.error(f"Data was not found for {ticker}")
 
@@ -184,6 +188,22 @@ class APIClient(JsonSocket):
                         )
         )
         return r
+
+    def ping(self):
+        r = self.execute(
+            baseCommand(commandName="ping")
+        )
+        return r
+
+    def getBalance(self):
+        return self.execute(
+            baseCommand(commandName="getBalance")
+        )
+
+    def getMarginLevel(self):
+        return self.execute(
+            baseCommand(commandName="getMarginLevel")
+        ).get('returnData')
 
 
 class APIStreamClient(JsonSocket):
