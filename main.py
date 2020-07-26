@@ -3,14 +3,16 @@ import socket
 import logging
 import time
 import ssl
+import os
 from threading import Thread
 import pandas as pd
-from settings import DEBUG
+from datetime import datetime
+from settings import DEBUG, BASE_PATH
 from src.commands import loginCommand
 from src.clients import APIClient, APIStreamClient
 from src.trading import Trader, StrategyLoss, StrategyProfit
 from src.transactions import create_transaction_info, TransactionType, TransactionCommand, TransactionInfo, \
-    calculate_bid_price
+    calculate_bid_price, read_trades
 from environs import Env
 
 
@@ -20,10 +22,16 @@ def create_logger():
     FORMAT = '[%(asctime)-15s][%(funcName)s:%(lineno)d] %(message)s'
     logging.basicConfig(format=FORMAT)
 
+    file_handler = logging.FileHandler(
+        os.path.join(BASE_PATH, 'logs', f"{datetime.now().strftime('%m-%d-%Y-%H-%M-%S')}.log")
+    )
+
     if DEBUG:
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.CRITICAL)
+
+    logger.addHandler(file_handler)
     return logger
 
 
@@ -50,34 +58,14 @@ def openTransaction(client: APIClient,
     price = calculate_bid_price(current_data['ask'], current_data['high'])
 
     transaction_info: TransactionInfo = create_transaction_info(
-        command=TransactionCommand.BUY,
+        command=TransactionCommand.BUY_LIMIT,
         symbol=symbol,
         ttype=TransactionType.ORDER_OPEN,
         price=price,
         volume=volume,
-        stop_loss=0,
-        take_profit=1000,
+        stop_loss=int(price*StrategyLoss.DEFAULT.value),
+        take_profit=int(price*StrategyProfit.DEFAULT.value),
         custom_comment=f"{symbol} - {price}"
-    )
-    return client.tradeTransaction(transaction_info)
-
-
-def closeTransaction(client: APIClient,
-                     symbol: str,
-                     volume: float,
-                     order_id: int,
-                     price: float):
-
-    transaction_info: TransactionInfo = create_transaction_info(
-        command=TransactionCommand.SELL,
-        symbol=symbol,
-        ttype=TransactionType.ORDER_CLOSE,
-        price=price,
-        volume=volume,
-        stop_loss=0,
-        take_profit=0,
-        custom_comment=f"Selling {symbol} - {price}",
-        order=order_id,
     )
     return client.tradeTransaction(transaction_info)
 
@@ -95,6 +83,7 @@ def updateStopLossTakeProfit(client: APIClient, trader: Trader, order_id: int):
         custom_comment=f"SL/ TP updated {transaction_data['symbol']}",
         order=order_id,
     )
+
     return client.tradeTransaction(transaction_info)
 
 
@@ -105,15 +94,28 @@ def main():
     env.read_env()
     user_id = env.str("userId")
     password = env.str("password")
+    # read action list
+    df_actions = read_trades()
     # establish connection
     client = connect(user_id, password, logger)
-
     trader = Trader(trades=client.getTrades(), balance_data=client.getMarginLevel())
 
-    # Buy some stocks
-    resp = openTransaction(client, "ETHERCLASSIC", 10.0)
-    resp = updateStopLossTakeProfit(client, trader, 212989848)
-    # status = client.tradeTransactionStatus(order=resp['returnData']['order'])
+    # Start daily trading
+    # buy new stocks if there is anything on the list
+    df_actions_buy = df_actions.query('command == "buy"')
+    for i, row in df_actions_buy.iterrows():
+        resp = openTransaction(client=client, symbol=row['symbol'], volume=row['volume'])
+        status = client.tradeTransactionStatus(order=resp['returnData']['order'])
+
+    # Sell stocks if there is anything to sell on the list
+    df_actions_sell = df_actions.query('command == "sell"')
+    for i, row in df_actions_sell.iterrows():
+        assert row['command'] == "sell"
+        resp = trader.close_transaction(client=client, order_id=row['order'])
+        status = client.tradeTransactionStatus(order=resp['returnData']['order'])
+
+    # By default we want to keep our stocks and only update stop loss / take profit
+    trader.updateStopLossTakeProfit(client)
 
     # gracefully close RR socket
     client.disconnect()

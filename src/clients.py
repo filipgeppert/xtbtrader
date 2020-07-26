@@ -128,7 +128,12 @@ class APIClient(JsonSocket):
                 "Cannot connect to " + address + ":" + str(port) + " after " + str(API_MAX_CONN_TRIES) + " retries")
 
     def execute(self, dictionary):
-        self.logger.info(f"Executing {dictionary}")
+        # Slow down execution to prevent too frequent request error
+        time.sleep(1)
+        if dictionary['command'] == "login":
+            self.logger.info(f"Executing: Authentication with login credentials.")
+        else:
+            self.logger.info(f"Executing {dictionary}")
         self._sendObj(dictionary)
         return self._readObj()
 

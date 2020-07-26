@@ -1,3 +1,7 @@
+import os
+
+BASE_PATH = os.path.dirname(os.path.realpath(__file__))
+
 # set to true on debug environment only
 DEBUG = True
 

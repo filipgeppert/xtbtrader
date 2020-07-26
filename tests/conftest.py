@@ -6,7 +6,7 @@ import logging
 import pytest
 from src.trading import Trader
 
-trades = [
+trade_data = [
     {
         "cmd": 0,
         "order": 212828097,
@@ -52,6 +52,16 @@ balance_data = {'balance': 99961.63,
                 'stockLock': 0.0,
                 'cashStockValue': 0.0
                 }
+
+
+@pytest.fixture
+def balance():
+    return balance_data
+
+
+@pytest.fixture
+def trades():
+    return trade_data
 
 
 class MockResponse:
@@ -118,5 +128,5 @@ def api_client(monkeypatch):
 
 
 @pytest.fixture()
-def trader():
+def trader(balance, trades):
     return Trader(trades=trades, balance_data=balance_data)
