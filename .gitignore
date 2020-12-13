@@ -98,3 +98,4 @@ tmp/
 *.ods#
 *.json
 trades.csv
+*.csv

@@ -210,6 +210,11 @@ class APIClient(JsonSocket):
             baseCommand(commandName="getMarginLevel")
         ).get('returnData')
 
+    def getAllSymbols(self):
+        return self.execute(
+            baseCommand(commandName="getAllSymbols")
+        )['returnData']
+
 
 class APIStreamClient(JsonSocket):
     def __init__(self, logger, address=DEFAULT_XAPI_ADDRESS, port=DEFUALT_XAPI_STREAMING_PORT, encrypt=True, ssId=None,

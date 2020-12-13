@@ -70,23 +70,6 @@ def openTransaction(client: APIClient,
     return client.tradeTransaction(transaction_info)
 
 
-def updateStopLossTakeProfit(client: APIClient, trader: Trader, order_id: int):
-    transaction_data = trader.get_trade_details(order_id=order_id)
-    transaction_info: TransactionInfo = create_transaction_info(
-        command=transaction_data['cmd'],
-        symbol=transaction_data['symbol'],
-        ttype=TransactionType.ORDER_MODIFY,
-        price=transaction_data['open_price'],
-        volume=transaction_data['volume'],
-        stop_loss=transaction_data['sl_new'],
-        take_profit=transaction_data['tp_new'],
-        custom_comment=f"SL/ TP updated {transaction_data['symbol']}",
-        order=order_id,
-    )
-
-    return client.tradeTransaction(transaction_info)
-
-
 def main():
     logger = create_logger()
     # read login credentials
@@ -121,5 +104,22 @@ def main():
     client.disconnect()
 
 
+def download_symbols():
+    today = datetime.now().strftime("%d-%m-%Y")
+    logger = create_logger()
+    # read login credentials
+    env = Env()
+    env.read_env()
+    user_id = env.str("userId")
+    password = env.str("password")
+    # read action list
+    df_actions = read_trades()
+    # establish connection
+    client = connect(user_id, password, logger)
+    symbols = client.getAllSymbols()
+    df_symbols = pd.DataFrame(symbols)
+    df_symbols.to_csv(os.path.join('data', 'symbols', f'{today}.csv'), index=False)
+
 if __name__ == "__main__":
-    main()
+    # main()
+    download_symbols()

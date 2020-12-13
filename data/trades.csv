@@ -1,2 +1,2 @@
-symbol,quantity,sl
-BITCOIN,1,0.7
+symbol,volume,sl_strategy,command,order
+ETHERCLASSIC,20.0,default,buy,0

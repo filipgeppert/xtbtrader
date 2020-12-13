@@ -47,7 +47,7 @@ class TransactionInfo(TypedDict):
     symbol: str
     tp: float
     type: TransactionType
-    volume: float
+    volume: int
 
 
 def create_transaction_info(
@@ -63,7 +63,7 @@ def create_transaction_info(
         take_profit=False,
         volume=False,
     ) -> TransactionInfo:
-    getcontext().prec = 2
+
     ti = dict()
     ti['cmd'] = command
     ti['customComment'] = custom_comment
@@ -75,7 +75,7 @@ def create_transaction_info(
     ti['price'] = round(price, 2)
     ti['sl'] = round(stop_loss, 2)
     ti['tp'] = round(take_profit if take_profit else price * 2, 2)
-    ti['volume'] = round(volume, 2)
+    ti['volume'] = int(volume)
     return ti
 
 
